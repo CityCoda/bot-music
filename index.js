@@ -40,12 +40,22 @@ client.on('messageCreate', async (message) => {
   try {
     let videoURL = query;
 
-    // Se não for um link, busca no YouTube
     if (!ytdl.validateURL(query)) {
       const result = await ytSearch(query);
       if (!result.videos.length) return message.reply('🔍 Música não encontrada.');
       videoURL = result.videos[0].url;
     }
+
+    const connection = joinVoiceChannel({
+      channelId: voiceChannel.id,
+      guildId: message.guild.id,
+      adapterCreator: message.guild.voiceAdapterCreator,
+    });
+
+    const player = createAudioPlayer();
+    connection.subscribe(player);
+
+    await entersState(connection, VoiceConnectionStatus.Ready, 5_000);
 
     const stream = ytdl(videoURL, {
       filter: 'audioonly',
@@ -60,17 +70,6 @@ client.on('messageCreate', async (message) => {
     });
 
     const resource = createAudioResource(stream);
-    const player = createAudioPlayer();
-
-    const connection = joinVoiceChannel({
-      channelId: voiceChannel.id,
-      guildId: message.guild.id,
-      adapterCreator: message.guild.voiceAdapterCreator,
-    });
-
-    connection.subscribe(player);
-    await entersState(connection, VoiceConnectionStatus.Ready, 5000);
-
     player.play(resource);
 
     player.once(AudioPlayerStatus.Idle, () => {
