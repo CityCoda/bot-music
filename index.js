@@ -13,7 +13,6 @@ const {
 } = require('@discordjs/voice');
 const ytdl = require('ytdl-core');
 const ytSearch = require('yt-search');
-const ffmpegPath = require('ffmpeg-static');
 
 const client = new Client({
   intents: [
@@ -41,7 +40,7 @@ client.on('messageCreate', async (message) => {
   try {
     let videoURL = query;
 
-    // Se não for link, faz a busca
+    // Se não for um link, busca no YouTube
     if (!ytdl.validateURL(query)) {
       const result = await ytSearch(query);
       if (!result.videos.length) return message.reply('🔍 Música não encontrada.');
@@ -51,7 +50,7 @@ client.on('messageCreate', async (message) => {
     const stream = ytdl(videoURL, {
       filter: 'audioonly',
       quality: 'highestaudio',
-      highWaterMark: 1 << 25, // Reduz chance de corte
+      highWaterMark: 1 << 25,
       requestOptions: {
         headers: {
           'User-Agent':
@@ -70,7 +69,7 @@ client.on('messageCreate', async (message) => {
     });
 
     connection.subscribe(player);
-    await entersState(connection, VoiceConnectionStatus.Ready, 5_000);
+    await entersState(connection, VoiceConnectionStatus.Ready, 5000);
 
     player.play(resource);
 
